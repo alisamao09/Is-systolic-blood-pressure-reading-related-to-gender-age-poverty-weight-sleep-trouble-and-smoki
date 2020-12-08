@@ -4,6 +4,7 @@ output: html_document
 ---
 
 ```{r}
+# Load data
 library(NHANES)
 library(tidyverse)
 library(glmnet)
@@ -25,9 +26,11 @@ length(which(small.nhanes$ID %in% train$ID))
 test <- small.nhanes[!small.nhanes$ID %in% train$ID,]
 nrow(test)
 
+# Fit the model with all predictors
 model <- lm(train$BPSysAve ~ ., data = train[, -c(1)])
 summary(model)  
 
+# Diagnostic check
 ## The hat values ###
 h <- hatvalues(model)
 thresh <- 2 * 36/nrow(train)
@@ -62,18 +65,19 @@ plot(train$BPSysAve ~ fitted,type='p', xlab = "Fitted Values",
 abline(lm(train$BPSysAve ~ fitted), lwd = 2, col = "blue")
 lines(lowess(fitted,train$BPSysAve), col = "red")
 
-length(model$coefficients) 
 
+# Check if the predictors should be transformed
 library(car)
 mult <- lm(cbind(train$BPSysAve, train$Gender, train$Age, train$Race3,train$Education, train$MaritalStatus,train$HHIncome, train$Poverty, train$Weight, train$Height, train$BMI, train$Depressed, train$SleepHrsNight, train$SleepTrouble, train$PhysActive,train$SmokeNow) ~ 1)
 bc <- powerTransform(mult, family = yjPower)
 summary(bc)
 library(car)
 
+# Check multicollinearity among the predictors 
 vif(model.6) 
-train
 anova(model)
 
+# Check variable criteria according to AIC, AICc, BIC, R2
 criteria <- function(model){
     n <- length(model$residuals)
     p <- 15
@@ -91,6 +95,7 @@ criteria <- function(model){
 crit <- criteria(model = model)
 crit
 
+# Stepwise variable selections
 sel.var.bic <- step(model, trace = 0, k = log(400), direction = "both") 
 select_var_b<-attr(terms(sel.var.bic), "term.labels")   
 select_var_b
@@ -115,6 +120,7 @@ sel.var.aic5 <- step(model, trace = 0, k = 2, direction = "backward")
 select_var5<-attr(terms(sel.var.aic5), "term.labels")   
 select_var5
 
+# Select the final model according to those criteria 
 model.2 <- lm(train$BPSysAve ~ train$Gender + train$Age, data = train)
 crit2 <- criteria(model = model.2)
 crit2
@@ -145,25 +151,26 @@ crit7
 
 summary(model.3)
 
-h1 <- hatvalues(model.3)
+# Final model diagnostic check
+h1 <- hatvalues(model.1)
 thresh1 <- 2 * 36/nrow(train)
 w1 <- which(h1 > thresh1)
 w1
 
 ### The Influential Observations ####
-D1 <- cooks.distance(model.3)
+D1 <- cooks.distance(model.1)
 which(D1 > qf(0.5, 36, 400-36))
 
 ## DFFITS ##
-dfits1 <- dffits(model.3)
+dfits1 <- dffits(model.3=1)
 which(abs(dfits1) > 2*sqrt(36/400))
 
 ## DFBETAS ##
-dfb1 <- dfbetas(model.3)
+dfb1 <- dfbetas(model.1)
 which(abs(dfb1[,1]) > 2/sqrt(400))
 
-resid1 <- rstudent(model.3)
-fitted1<- predict(model.3)
+resid1 <- rstudent(model.1)
+fitted1<- predict(model.1)
 
 par(family = 'serif', mfrow = c(2,2))
 qqnorm(resid1)
@@ -178,25 +185,15 @@ plot(train$BPSysAve ~ fitted1,type='p', xlab = "Fitted Values",
 abline(lm(train$BPSysAve ~ fitted1), lwd = 2, col = "blue")
 lines(lowess(fitted1,train$BPSysAve), col = "red")
 
-
+# Produce the criteria comparision table
 rbind(crit,crit1, crit2, crit3, crit4, crit5, crit6)
 summary(model)
 summary(model.1)
-summary(model.2)
-summary(model.4)
-summary(model.5)
-summary(model.3)
-summary(model.6)
-cor(train$Gender,train$SmokeNow)
-anova(model,model.1)
-anova(model,model.2)
-anova(model,model.3)
-anova(model,model.4)
-anova(model,model.5)
-anova(model,model.6)
+
 tapply(train$BPSysAve, train$Race3, mean)
  db_e <- train[train$Gender == "Male",]
  table(db_e$BPSysAve)
+ 
 ## Perform Prediction ##
 pred.y <- predict(model, newdata = test, type = "response")
 
@@ -312,6 +309,7 @@ pred.error.lasso
 
 print(c(pred.error.AIC, pred.error.BIC, pred.error.lasso))
 
+# Data description 
 count = 0
 for (i in 1:743)
 {if (small.nhanes$Gender[i]=="male")
@@ -381,7 +379,7 @@ sd(small.nhanes$SmokeNow=='No')
 
 sd(small.nhanes$SleepTrouble)
 
-pairs(train[,10,17])
+# Visualize relationships between some predictors and their relationship with the outcomes
 library(ggplot2)
 library(ggsci)
 ggplot(train, aes(train$SmokeNow, train$Age)) +
@@ -394,6 +392,6 @@ ggplot(train, aes(train$SmokeNow, train$Age)) +
   labs(
     caption = "Source: NHANES survey",
     col="Blood pressure")
-model1<-model.matrix(model)
+
 
 ```
