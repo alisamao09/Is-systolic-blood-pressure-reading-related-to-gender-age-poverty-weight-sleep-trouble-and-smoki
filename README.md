@@ -10,7 +10,7 @@ most to systolic blood pressure to maintain a good health.
 * Checked model inferences, predictability and scalability
 * Performed diagnostic check
 
-# Final model interpretation and significance
+## Final model interpretation and significance
 Blood pressure with men is higher than that with women at similar ages1. The increase in blood pressure with age is mostly associated with artery structural changes2.The huge poverty impact on systolic blood pressure may be attributed to poor medical condition. In addition, obesity leads to artery stiffness, affecting stolid blood pressure, while sleep impacts overall cardiovascular health. Thus, the five selected variables in the final model are most related to affect the change of systolic blood pressure, and provides the most accurate predictions based on the dataset. But SmokeNow is not included for its lack of significant effect on inferences and predictions.The larger number of males, the overall old ages, less amount of sleep and higher weight all lead to a high combined systolic blood pressure (124>120).
 
 ## Limitations of analysis and potential
